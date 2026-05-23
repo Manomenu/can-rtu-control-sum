@@ -106,7 +106,6 @@ static bool parse_n(const std::string& s, long long& out) {
 
 int main(int argc, char* argv[]) {
     std::ios_base::sync_with_stdio(false);
-    std::cin.tie(nullptr);
 
     // ---- argument mode: ./can_crc <bits> [repetitions] ----
     if (argc >= 2) {
