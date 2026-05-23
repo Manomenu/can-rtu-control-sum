@@ -85,6 +85,10 @@ Per iteration: 3.195E-07 ms  (0.320 ns)
 
 Spacje w ciągu bitów są ignorowane — można grupować bity dla czytelności.
 
+## Tło teoretyczne
+
+Słowniczek pojęć CAN, struktura ramki, bit stuffing, teoria CRC-15 i szczegóły implementacyjne: [teoria.pdf](.raport/teoria.pdf)
+
 ## Wyniki benchmarku (Apple Silicon, `-O3 -march=native`)
 
 | Wejście        | Bity | CRC-15/CAN | Czas / iterację |
