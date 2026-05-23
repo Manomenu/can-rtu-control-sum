@@ -1,63 +1,94 @@
-# can-rtu-control-sum
+# CAN CRC-15 Calculator
 
-Aplikacja wyznaczająca sumę kontrolną CRC-15 dla sieci CAN oraz analiza czasu
-transmisji ramki CAN z bit stuffingiem.
-Projekt realizuje zadania 4.1, 4.2 i 4.3 z laboratorium *Systemy czasu rzeczywistego* (EiTI PW).
+Kalkulator sumy kontrolnej CRC-15/CAN zgodny z algorytmem z normy CAN 2.0.
+Projekt 4 — Systemy czasu rzeczywistego, EiTI PW.
 
-## Dlaczego C++, nie Python?
+## Co robi
 
-Zadanie 4.1 wymaga dostarczenia aplikacji **w postaci kodu maszynowego wykonywalnego**
-i optymalizacji pod kątem minimalizacji czasu realizacji algorytmu (do 10⁹ powtórzeń).
-Python byłby ~100× wolniejszy i nie generuje natywnego kodu maszynowego bez dodatkowych narzędzi.
-C++ kompilowany z `-O3 -march=native` jest naturalnym i jedynym właściwym wyborem.
+- Wczytuje ciąg do **96 bitów** z klawiatury
+- Wyznacza **CRC-15/CAN** (wielomian `0x4599`) i wyświetla wynik w hex
+- Mierzy czas obliczeń dla zadanej liczby powtórzeń (1 – 10⁹)
 
-## Wymagania
+Implementacja zoptymalizowana: tablica przeglądowa 256 × 2 B generowana
+w czasie kompilacji (`constexpr`), przetwarzanie bajt po bajcie (8× szybsze
+niż bit po bicie), kod bezgałęziowy w pętli wewnętrznej.
 
-- macOS / Linux
-- `clang++` (≥ 14) lub `g++` (≥ 11) z obsługą C++17
-- [`just`](https://github.com/casey/just) — opcjonalny menedżer zadań
+## Budowanie
 
-## Budowanie i uruchamianie
-
-**Przez `just`:**
-```bash
-just        # build
-just run    # build + uruchom
-just clean  # usuń plik wykonywalny
-```
-
-**Przez bash:**
-```bash
-bash build.sh          # kompilacja
-bash run_zadanie41.sh  # interaktywny runner
-```
-
-**Ręcznie:**
-```bash
-clang++ -std=c++17 -O3 -march=native -o can_crc src/main.cpp
-./can_crc
-```
-
-## Parametry zadania 4.1
-
-| Parametr | Wartość |
-|----------|---------|
-| Wielomian CRC-15/CAN | `G(x) = x¹⁵ + x¹⁴ + x¹⁰ + x⁸ + x⁷ + x⁴ + x³ + 1` |
-| Reprezentacja wielomianu | `0x4599` (bez bitu x¹⁵) |
-| Inicjalizacja rejestru | `CRC_RG = 0` |
-| Wejście | ciąg do 96 bitów ('0'/'1') z klawiatury |
-| Wyjście | CRC w postaci szesnastkowej |
-| Liczba powtórzeń | 1 – 10⁹ |
-
-## Struktura projektu
+Wymagane: `clang++` (lub `g++` na Windows), [`just`](https://just.systems).
 
 ```
-├── src/
-│   └── main.cpp              implementacja CRC-15/CAN + CLI
-├── .raport/
-│   └── projekt_4.tex         sprawozdanie LaTeX
-├── build.sh                  skrypt kompilacji
-├── run_zadanie41.sh          interaktywny runner zadania 4.1
-├── shared.sh                 wspólna logika bash (kolory, budowanie)
-└── justfile                  alternatywne polecenia budowania
+just build   # kompilacja
+just run     # kompilacja + uruchomienie
+just clean   # usuwa plik wykonywalny
 ```
+
+## Uruchomienie
+
+**Tryb argumentów** (nie wymaga interakcji):
+
+```
+./can_crc <bits> [repetitions]
+```
+
+```
+$ ./can_crc 10110100
+---------------------------------
+CRC-15/CAN: 0x0C65
+---------------------------------
+Input bits:    8
+Repetitions:   1
+Total time:    0.000 ms
+---------------------------------
+
+$ ./can_crc 10110100 1000000000
+---------------------------------
+CRC-15/CAN: 0x0C65
+---------------------------------
+Input bits:    8
+Repetitions:   1000000000
+Total time:    297.766 ms
+Per iteration: 2.978E-07 ms  (0.298 ns)
+---------------------------------
+
+$ ./can_crc --help
+Usage:
+  can_crc                    interactive mode
+  can_crc <bits>             compute CRC, 1 iteration
+  can_crc <bits> <n>         compute CRC, n iterations
+```
+
+**Tryb interaktywny** (bez argumentów):
+
+```
+$ ./can_crc
+=================================
+    CAN CRC-15 Calculator
+=================================
+
+Bit string (0/1, max 96 bits, spaces allowed):
+> 10110100 01110010
+Repetitions (1 - 1000000000):
+> 1000000000
+
+Computing 1000000000 iteration(s)...
+
+---------------------------------
+CRC-15/CAN: 0x7747
+---------------------------------
+Input bits:    16
+Repetitions:   1000000000
+Total time:    319.483 ms
+Per iteration: 3.195E-07 ms  (0.320 ns)
+---------------------------------
+```
+
+Spacje w ciągu bitów są ignorowane — można grupować bity dla czytelności.
+
+## Wyniki benchmarku (Apple Silicon, `-O3 -march=native`)
+
+| Wejście        | Bity | CRC-15/CAN | Czas / iterację |
+|----------------|------|------------|-----------------|
+| `00...0` (96×) |  96  | `0x0000`   | 0,320 ns        |
+| `11...1` (96×) |  96  | `0x072A`   | 0,314 ns        |
+
