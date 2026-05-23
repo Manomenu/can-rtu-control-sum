@@ -28,7 +28,7 @@ just clean   # usuwa plik wykonywalny
 **Tryb argumentów** (nie wymaga interakcji):
 
 ```
-./can_crc <bits> [repetitions]
+./can_crc <bits> [repetitions] # na windows can_crc.exe
 ```
 
 ```
